@@ -280,6 +280,52 @@
       padding: 20px;
       color: var(--muted);
     }
+
+    .summary-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .summary-item {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .summary-item textarea {
+      min-height: 70px;
+      margin-top: 8px;
+    }
+    .email-preview {
+      white-space: pre-wrap;
+      background: color-mix(in oklab, var(--soft), #fff 8%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+    .mini-table th {
+      background: var(--accent);
+      color: var(--accent-text);
+      text-align: left;
+      padding: 10px;
+      font-size: 13px;
+    }
+    .mini-table td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      vertical-align: top;
+    }
+
   </style>
 </head>
 <body>
@@ -303,6 +349,7 @@
     <nav class="tabs">
       <button class="tab active" data-tab="daily">Daily Log</button>
       <button class="tab" data-tab="weekly">Weekly Goals</button>
+      <button class="tab" data-tab="friday">Friday Summary</button>
       <button class="tab" data-tab="bullets">Resume Bullets</button>
       <button class="tab" data-tab="stats">Stats</button>
     </nav>
@@ -359,6 +406,51 @@
       </div>
     </section>
 
+
+    <section id="friday">
+      <div class="grid">
+        <div class="card span-5">
+          <h2>Friday Weekly Summary</h2>
+          <p class="muted small">Every Friday, pull the 5 most important things you did that moved your project forward. This becomes an easy manager update and a record for your return-offer case.</p>
+
+          <label>Week of</label>
+          <input id="summaryWeek" type="date" />
+
+          <label>Manager name</label>
+          <input id="managerName" placeholder="Example: Henry" />
+
+          <label>Next week I'm planning to</label>
+          <textarea id="nextWeekPlan" placeholder="Example: Finish dashboard draft, validate the RCA data source, and schedule feedback with the team."></textarea>
+
+          <label>Blockers / things I need</label>
+          <textarea id="weeklyBlockers" placeholder="Example: Need access to ServiceNow dashboard data or clarification on which reliability metric matters most."></textarea>
+
+          <div class="row" style="margin-top:12px;">
+            <button id="saveSummaryBtn">Save Summary</button>
+            <button id="copyEmailBtn" class="secondary">Copy Email</button>
+          </div>
+        </div>
+
+        <div class="card span-7">
+          <h2>Top 5 Things I Did This Week</h2>
+          <p class="muted small">You can type these manually, or use your daily logs as inspiration.</p>
+          <div id="topFiveList" class="summary-list"></div>
+        </div>
+
+        <div class="card span-12">
+          <h2>Daily Log Table for This Week</h2>
+          <p class="muted small">This gives you that simple “tasks completed / questions or blockers” view from the doc concept.</p>
+          <div id="weeklyTable"></div>
+        </div>
+
+        <div class="card span-12">
+          <h2>Friday Email Template</h2>
+          <p class="muted small">Copy this into an email or Teams message to your manager.</p>
+          <div id="emailPreview" class="email-preview"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="bullets">
       <div class="grid">
         <div class="card span-4">
@@ -406,8 +498,9 @@
   <script>
     const KEY = "internship-tracker-v2";
     const today = new Date().toISOString().slice(0,10);
-    const defaultData = { logs: [], goals: [], customBullets: [] };
+    const defaultData = { logs: [], goals: [], customBullets: [], weeklySummaries: {} };
     let data = load();
+    if (!data.weeklySummaries) data.weeklySummaries = {};
 
     function load() {
       try { return JSON.parse(localStorage.getItem(KEY)) || structuredClone(defaultData); }
@@ -415,7 +508,150 @@
     }
     function save() {
       localStorage.setItem(KEY, JSON.stringify(data));
-      render();
+  
+    function getSummary(week) {
+      if (!data.weeklySummaries) data.weeklySummaries = {};
+      if (!data.weeklySummaries[week]) {
+        data.weeklySummaries[week] = {
+          managerName: "",
+          nextWeekPlan: "",
+          blockers: "",
+          topFive: ["", "", "", "", ""]
+        };
+      }
+      return data.weeklySummaries[week];
+    }
+
+    function logsForWeek(week) {
+      const start = new Date(week + "T00:00:00");
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      return data.logs
+        .filter(l => {
+          const d = new Date(l.date + "T12:00:00");
+          return d >= start && d < end;
+        })
+        .sort((a,b) => a.date.localeCompare(b.date));
+    }
+
+    function renderFridaySummary() {
+      const weekInput = document.getElementById("summaryWeek");
+      if (!weekInput) return;
+
+      if (!weekInput.value) weekInput.value = currentWeekKey();
+      const week = startOfWeek(weekInput.value);
+      if (weekInput.value !== week) weekInput.value = week;
+
+      const summary = getSummary(week);
+      document.getElementById("managerName").value = summary.managerName || "";
+      document.getElementById("nextWeekPlan").value = summary.nextWeekPlan || "";
+      document.getElementById("weeklyBlockers").value = summary.blockers || "";
+
+      const topFive = summary.topFive || ["", "", "", "", ""];
+      document.getElementById("topFiveList").innerHTML = [0,1,2,3,4].map(i => `
+        <div class="summary-item">
+          <strong>${i + 1}.</strong>
+          <textarea id="topThing${i}" placeholder="Example: Built first RCA dashboard draft and identified missing reliability metric.">${escapeHtml(topFive[i] || "")}</textarea>
+        </div>
+      `).join("");
+
+      const weekLogs = logsForWeek(week);
+      if (!weekLogs.length) {
+        document.getElementById("weeklyTable").innerHTML = `<div class="empty-state">No daily logs for this week yet.</div>`;
+      } else {
+        document.getElementById("weeklyTable").innerHTML = `
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Tasks completed</th>
+                <th>Questions / blockers / impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${weekLogs.map(l => `
+                <tr>
+                  <td><strong>${escapeHtml(friendlyDate(l.date))}</strong><br><span class="pill">${escapeHtml(l.tag)}</span></td>
+                  <td>${escapeHtml(l.text || "")}</td>
+                  <td>${escapeHtml(l.impact || "")}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      document.getElementById("emailPreview").textContent = buildFridayEmail(week);
+    }
+
+    function saveFridaySummary() {
+      const week = startOfWeek(document.getElementById("summaryWeek").value || currentWeekKey());
+      const summary = getSummary(week);
+      summary.managerName = document.getElementById("managerName").value.trim();
+      summary.nextWeekPlan = document.getElementById("nextWeekPlan").value.trim();
+      summary.blockers = document.getElementById("weeklyBlockers").value.trim();
+      summary.topFive = [0,1,2,3,4].map(i => document.getElementById("topThing" + i).value.trim());
+      if (!data.weeklySummaries) data.weeklySummaries = {};
+      data.weeklySummaries[week] = summary;
+      localStorage.setItem(KEY, JSON.stringify(data));
+      renderFridaySummary();
+    }
+
+    function buildFridayEmail(week) {
+      const summary = getSummary(week);
+      const manager = summary.managerName || "[Manager Name]";
+      const topFive = (summary.topFive || ["", "", "", "", ""]).map((x, i) => `${i + 1}. ${x || "____________________________________________"}`).join("\n");
+      const next = summary.nextWeekPlan || "____________________________________________";
+      const blockers = summary.blockers || "____________________________________________";
+
+      return `Subject: Weekly Update — Josh
+
+Hi ${manager},
+
+Here's a quick update on what I worked on this week:
+
+${topFive}
+
+Next week I'm planning to:
+${next}
+
+Any blockers or things I need from you:
+${blockers}
+
+Thanks,
+Josh`;
+    }
+
+    document.addEventListener("input", (e) => {
+      if (
+        e.target.id === "managerName" ||
+        e.target.id === "nextWeekPlan" ||
+        e.target.id === "weeklyBlockers" ||
+        e.target.id.startsWith("topThing")
+      ) {
+        saveFridaySummary();
+      }
+    });
+
+    document.addEventListener("change", (e) => {
+      if (e.target.id === "summaryWeek") renderFridaySummary();
+    });
+
+    document.addEventListener("click", async (e) => {
+      if (e.target.id === "saveSummaryBtn") {
+        saveFridaySummary();
+        alert("Weekly summary saved.");
+      }
+      if (e.target.id === "copyEmailBtn") {
+        saveFridaySummary();
+        const week = startOfWeek(document.getElementById("summaryWeek").value || currentWeekKey());
+        await navigator.clipboard.writeText(buildFridayEmail(week));
+        alert("Friday email copied.");
+      }
+    });
+
+
+    render();
     }
     function uid() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()); }
     function escapeHtml(str="") {
@@ -629,6 +865,7 @@
       `).join("");
 
       renderGoalsByWeek();
+      renderFridaySummary();
 
       const bullets = buildBullets();
       const bulletEl = document.getElementById("bulletsList");
@@ -675,6 +912,149 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
     }
+
+
+    function getSummary(week) {
+      if (!data.weeklySummaries) data.weeklySummaries = {};
+      if (!data.weeklySummaries[week]) {
+        data.weeklySummaries[week] = {
+          managerName: "",
+          nextWeekPlan: "",
+          blockers: "",
+          topFive: ["", "", "", "", ""]
+        };
+      }
+      return data.weeklySummaries[week];
+    }
+
+    function logsForWeek(week) {
+      const start = new Date(week + "T00:00:00");
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      return data.logs
+        .filter(l => {
+          const d = new Date(l.date + "T12:00:00");
+          return d >= start && d < end;
+        })
+        .sort((a,b) => a.date.localeCompare(b.date));
+    }
+
+    function renderFridaySummary() {
+      const weekInput = document.getElementById("summaryWeek");
+      if (!weekInput) return;
+
+      if (!weekInput.value) weekInput.value = currentWeekKey();
+      const week = startOfWeek(weekInput.value);
+      if (weekInput.value !== week) weekInput.value = week;
+
+      const summary = getSummary(week);
+      document.getElementById("managerName").value = summary.managerName || "";
+      document.getElementById("nextWeekPlan").value = summary.nextWeekPlan || "";
+      document.getElementById("weeklyBlockers").value = summary.blockers || "";
+
+      const topFive = summary.topFive || ["", "", "", "", ""];
+      document.getElementById("topFiveList").innerHTML = [0,1,2,3,4].map(i => `
+        <div class="summary-item">
+          <strong>${i + 1}.</strong>
+          <textarea id="topThing${i}" placeholder="Example: Built first RCA dashboard draft and identified missing reliability metric.">${escapeHtml(topFive[i] || "")}</textarea>
+        </div>
+      `).join("");
+
+      const weekLogs = logsForWeek(week);
+      if (!weekLogs.length) {
+        document.getElementById("weeklyTable").innerHTML = `<div class="empty-state">No daily logs for this week yet.</div>`;
+      } else {
+        document.getElementById("weeklyTable").innerHTML = `
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Tasks completed</th>
+                <th>Questions / blockers / impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${weekLogs.map(l => `
+                <tr>
+                  <td><strong>${escapeHtml(friendlyDate(l.date))}</strong><br><span class="pill">${escapeHtml(l.tag)}</span></td>
+                  <td>${escapeHtml(l.text || "")}</td>
+                  <td>${escapeHtml(l.impact || "")}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      document.getElementById("emailPreview").textContent = buildFridayEmail(week);
+    }
+
+    function saveFridaySummary() {
+      const week = startOfWeek(document.getElementById("summaryWeek").value || currentWeekKey());
+      const summary = getSummary(week);
+      summary.managerName = document.getElementById("managerName").value.trim();
+      summary.nextWeekPlan = document.getElementById("nextWeekPlan").value.trim();
+      summary.blockers = document.getElementById("weeklyBlockers").value.trim();
+      summary.topFive = [0,1,2,3,4].map(i => document.getElementById("topThing" + i).value.trim());
+      if (!data.weeklySummaries) data.weeklySummaries = {};
+      data.weeklySummaries[week] = summary;
+      localStorage.setItem(KEY, JSON.stringify(data));
+      renderFridaySummary();
+    }
+
+    function buildFridayEmail(week) {
+      const summary = getSummary(week);
+      const manager = summary.managerName || "[Manager Name]";
+      const topFive = (summary.topFive || ["", "", "", "", ""]).map((x, i) => `${i + 1}. ${x || "____________________________________________"}`).join("\n");
+      const next = summary.nextWeekPlan || "____________________________________________";
+      const blockers = summary.blockers || "____________________________________________";
+
+      return `Subject: Weekly Update — Josh
+
+Hi ${manager},
+
+Here's a quick update on what I worked on this week:
+
+${topFive}
+
+Next week I'm planning to:
+${next}
+
+Any blockers or things I need from you:
+${blockers}
+
+Thanks,
+Josh`;
+    }
+
+    document.addEventListener("input", (e) => {
+      if (
+        e.target.id === "managerName" ||
+        e.target.id === "nextWeekPlan" ||
+        e.target.id === "weeklyBlockers" ||
+        e.target.id.startsWith("topThing")
+      ) {
+        saveFridaySummary();
+      }
+    });
+
+    document.addEventListener("change", (e) => {
+      if (e.target.id === "summaryWeek") renderFridaySummary();
+    });
+
+    document.addEventListener("click", async (e) => {
+      if (e.target.id === "saveSummaryBtn") {
+        saveFridaySummary();
+        alert("Weekly summary saved.");
+      }
+      if (e.target.id === "copyEmailBtn") {
+        saveFridaySummary();
+        const week = startOfWeek(document.getElementById("summaryWeek").value || currentWeekKey());
+        await navigator.clipboard.writeText(buildFridayEmail(week));
+        alert("Friday email copied.");
+      }
+    });
+
 
     render();
   </script>

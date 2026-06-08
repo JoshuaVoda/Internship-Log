@@ -1,4 +1,4 @@
-const CACHE_NAME = "internship-tracker-v2-cache";
+const CACHE_NAME = "internship-tracker-v3-cache";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", event => {
