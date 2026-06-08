@@ -1,11 +1,10 @@
-# Internship Tracker PWA — v3
+# Internship Tracker PWA — v4
 
-This version adds a Friday Weekly Summary system inspired by the internship log concept:
-- Top 5 things I did this week
-- Manager email template
-- Next week planning
-- Blockers / things I need
-- Weekly daily-log table
+This version removes the Resume Bullets tab and keeps the app focused on:
+- Daily Log
+- Weekly Goals
+- Friday Summary
+- Stats
 
 ## How to update your GitHub Pages site
 1. Unzip this folder.
@@ -15,4 +14,5 @@ This version adds a Friday Weekly Summary system inspired by the internship log 
    - Windows: Ctrl + Shift + R
    - Mac: Cmd + Shift + R
 
-Your existing tracker data should stay saved in your browser because the app uses the same localStorage key.
+You should now see:
+Daily Log | Weekly Goals | Friday Summary | Stats

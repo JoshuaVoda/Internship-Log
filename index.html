@@ -331,7 +331,7 @@
 <body>
   <header>
     <h1>Internship Tracker</h1>
-    <p class="subtitle">Log your work, convert impact into resume bullets, and build weekly talking points that help turn the internship into a job offer.</p>
+    <p class="subtitle">Log your work, plan your weeks, and build weekly manager updates that help turn the internship into a job offer.</p>
     <div class="row">
       <button id="installBtn" class="secondary hidden">Install App</button>
       <button id="exportBtn" class="secondary">Export Backup</button>
@@ -350,7 +350,6 @@
       <button class="tab active" data-tab="daily">Daily Log</button>
       <button class="tab" data-tab="weekly">Weekly Goals</button>
       <button class="tab" data-tab="friday">Friday Summary</button>
-      <button class="tab" data-tab="bullets">Resume Bullets</button>
       <button class="tab" data-tab="stats">Stats</button>
     </nav>
 
@@ -451,23 +450,6 @@
       </div>
     </section>
 
-    <section id="bullets">
-      <div class="grid">
-        <div class="card span-4">
-          <h2>Add Custom Bullet</h2>
-          <label>Resume bullet</label>
-          <textarea id="customBullet" placeholder="Example: Built a dashboard that reduced manual tracking time by 30% for the team."></textarea>
-          <button id="addBulletBtn" style="margin-top:12px;">Add Bullet</button>
-          <button id="copyBulletsBtn" class="secondary" style="margin-top:8px;">Copy All Bullets</button>
-        </div>
-        <div class="card span-8">
-          <h2>Bullet Bank</h2>
-          <p class="muted small">Entries tagged “win” or with an impact note appear here automatically.</p>
-          <div id="bulletsList" class="muted">No bullets yet.</div>
-        </div>
-      </div>
-    </section>
-
     <section id="stats">
       <div class="grid">
         <div class="card span-4">
@@ -479,8 +461,8 @@
           <div id="completedGoals" class="stat">0</div>
         </div>
         <div class="card span-4">
-          <div class="muted">Resume bullet ideas</div>
-          <div id="totalBullets" class="stat">0</div>
+          <div class="muted">Friday summaries</div>
+          <div id="totalSummaries" class="stat">0</div>
         </div>
         <div class="card span-12">
           <h2>Activity Breakdown</h2>
@@ -769,7 +751,6 @@ Josh`;
 
     window.deleteLog = deleteLog;
     window.deleteGoal = deleteGoal;
-    window.deleteBullet = deleteBullet;
     window.toggleGoal = toggleGoal;
 
     function buildBullets() {
@@ -880,7 +861,7 @@ Josh`;
 
       document.getElementById("totalEntries").textContent = data.logs.length;
       document.getElementById("completedGoals").textContent = data.goals.filter(g => g.done).length;
-      document.getElementById("totalBullets").textContent = bullets.length;
+      document.getElementById("totalSummaries").textContent = data.weeklySummaries ? Object.keys(data.weeklySummaries).length : 0;
 
       const tags = ["technical", "collab", "learning", "win", "blocked/solved"];
       const max = Math.max(1, ...tags.map(t => data.logs.filter(l => l.tag === t).length));
