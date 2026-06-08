@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Internship Tracker</title>
+  <meta name="theme-color" content="#1a1a18" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" />
+  <style>
+    :root {
+      --bg: #f7f5ef;
+      --card: #ffffff;
+      --text: #1d1d1f;
+      --muted: #666;
+      --border: #ddd7cc;
+      --accent: #1a1a18;
+      --accent-text: #fff;
+      --soft: #f0ece4;
+      --danger: #b00020;
+      --success: #20734d;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #11110f;
+        --card: #1b1b18;
+        --text: #f4f1ea;
+        --muted: #b6b0a5;
+        --border: #343028;
+        --accent: #f4f1ea;
+        --accent-text: #11110f;
+        --soft: #24221d;
+        --danger: #ff8a9a;
+        --success: #79d6a4;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+    }
+    header {
+      padding: 28px 18px 16px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.04em; }
+    .subtitle { color: var(--muted); max-width: 780px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 0 18px 40px; }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 18px 0;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      padding: 12px 0;
+      z-index: 5;
+    }
+    .tab {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 650;
+    }
+    .tab.active {
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+    section { display: none; }
+    section.active { display: block; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+    }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+    @media (max-width: 800px) {
+      .span-4, .span-6, .span-8 { grid-column: span 12; }
+    }
+    label {
+      display: block;
+      font-weight: 700;
+      margin: 10px 0 6px;
+      font-size: 14px;
+    }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    textarea { min-height: 92px; resize: vertical; }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 13px;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+    button.secondary {
+      background: var(--soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button.danger { background: var(--danger); color: #fff; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; }
+    .entry, .goal, .bullet {
+      border-top: 1px solid var(--border);
+      padding: 12px 0;
+    }
+    .entry:first-child, .goal:first-child, .bullet:first-child { border-top: 0; }
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--border);
+      background: var(--soft);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    .impact { color: var(--success); font-weight: 700; }
+    .stat {
+      font-size: 34px;
+      font-weight: 850;
+      letter-spacing: -0.04em;
+    }
+    .progress {
+      height: 12px;
+      background: var(--soft);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .bar {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+    }
+    .checkbox {
+      width: auto;
+      transform: scale(1.2);
+      margin-right: 8px;
+    }
+    .install-hint {
+      border: 1px dashed var(--border);
+      background: var(--soft);
+      padding: 12px;
+      border-radius: 14px;
+      margin-top: 10px;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Internship Tracker</h1>
+    <p class="subtitle">Log your work, convert impact into resume bullets, and build weekly talking points that help turn the internship into a job offer.</p>
+    <div class="row">
+      <button id="installBtn" class="secondary hidden">Install App</button>
+      <button id="exportBtn" class="secondary">Export Backup</button>
+      <label class="secondary" style="margin:0; display:inline-flex; align-items:center; gap:8px; padding:10px 13px; border-radius:12px; border:1px solid var(--border); cursor:pointer;">
+        Import Backup
+        <input id="importInput" type="file" accept=".json" style="display:none" />
+      </label>
+    </div>
+    <div id="pwaHint" class="install-hint small muted">
+      To install: after hosting on GitHub Pages, open the site in Chrome or Edge and click the install icon in the address bar. On Mac, Chrome may show “Install Internship Tracker.”
+    </div>
+  </header>
+
+  <main>
+    <nav class="tabs">
+      <button class="tab active" data-tab="daily">Daily Log</button>
+      <button class="tab" data-tab="weekly">Weekly Goals</button>
+      <button class="tab" data-tab="bullets">Resume Bullets</button>
+      <button class="tab" data-tab="stats">Stats</button>
+    </nav>
+
+    <section id="daily" class="active">
+      <div class="grid">
+        <div class="card span-4">
+          <h2>Add Daily Entry</h2>
+          <label>Date</label>
+          <input id="logDate" type="date" />
+          <label>Category</label>
+          <select id="logTag">
+            <option>technical</option>
+            <option>collab</option>
+            <option>learning</option>
+            <option>win</option>
+            <option>blocked/solved</option>
+          </select>
+          <label>What did you do?</label>
+          <textarea id="logText" placeholder="Example: Met with Henry to clarify reliability goals for the project."></textarea>
+          <label>Impact / outcome</label>
+          <textarea id="logImpact" placeholder="Example: Turned vague project scope into 3 measurable deliverables for the week."></textarea>
+          <div class="row" style="margin-top:12px;">
+            <button id="addLogBtn">Save Entry</button>
+          </div>
+        </div>
+        <div class="card span-8">
+          <h2>Recent Entries</h2>
+          <div id="entriesList" class="muted">No entries yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="weekly">
+      <div class="grid">
+        <div class="card span-4">
+          <h2>Set Weekly Goals</h2>
+          <p class="muted small">Use this on Monday before your 1:1. Pick 3–5 things that would make the week successful.</p>
+          <label>Week of</label>
+          <input id="goalWeek" type="date" />
+          <label>Goal</label>
+          <textarea id="goalText" placeholder="Example: Create a first working proof-of-concept and demo it to my manager."></textarea>
+          <button id="addGoalBtn" style="margin-top:12px;">Add Goal</button>
+        </div>
+        <div class="card span-8">
+          <h2>This Week</h2>
+          <div id="goalsList" class="muted">No goals yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="bullets">
+      <div class="grid">
+        <div class="card span-4">
+          <h2>Add Custom Bullet</h2>
+          <label>Resume bullet</label>
+          <textarea id="customBullet" placeholder="Example: Built a dashboard that reduced manual tracking time by 30% for the Pharmacy Services Tech team."></textarea>
+          <button id="addBulletBtn" style="margin-top:12px;">Add Bullet</button>
+          <button id="copyBulletsBtn" class="secondary" style="margin-top:8px;">Copy All Bullets</button>
+        </div>
+        <div class="card span-8">
+          <h2>Bullet Bank</h2>
+          <p class="muted small">Entries tagged “win” or with an impact note appear here automatically. Rewrite them into stronger resume bullets as you go.</p>
+          <div id="bulletsList" class="muted">No bullets yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="stats">
+      <div class="grid">
+        <div class="card span-4">
+          <div class="muted">Total log entries</div>
+          <div id="totalEntries" class="stat">0</div>
+        </div>
+        <div class="card span-4">
+          <div class="muted">Completed goals</div>
+          <div id="completedGoals" class="stat">0</div>
+        </div>
+        <div class="card span-4">
+          <div class="muted">Resume bullet ideas</div>
+          <div id="totalBullets" class="stat">0</div>
+        </div>
+        <div class="card span-12">
+          <h2>Activity Breakdown</h2>
+          <div id="tagStats"></div>
+        </div>
+        <div class="card span-12">
+          <h2>Reset</h2>
+          <p class="muted small">Export a backup first if you care about your data.</p>
+          <button id="resetBtn" class="danger">Reset All Data</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const KEY = "internship-tracker-v2";
+    const today = new Date().toISOString().slice(0,10);
+    const defaultData = { logs: [], goals: [], customBullets: [] };
+    let data = load();
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY)) || structuredClone(defaultData); }
+      catch { return structuredClone(defaultData); }
+    }
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(data));
+      render();
+    }
+    function uid() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()); }
+    function escapeHtml(str="") {
+      return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    }
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    document.getElementById("logDate").value = today;
+    document.getElementById("goalWeek").value = today;
+
+    document.getElementById("addLogBtn").addEventListener("click", () => {
+      const entry = {
+        id: uid(),
+        date: document.getElementById("logDate").value || today,
+        tag: document.getElementById("logTag").value,
+        text: document.getElementById("logText").value.trim(),
+        impact: document.getElementById("logImpact").value.trim(),
+        createdAt: new Date().toISOString()
+      };
+      if (!entry.text && !entry.impact) return alert("Add what you did or the impact first.");
+      data.logs.unshift(entry);
+      document.getElementById("logText").value = "";
+      document.getElementById("logImpact").value = "";
+      save();
+    });
+
+    document.getElementById("addGoalBtn").addEventListener("click", () => {
+      const goal = {
+        id: uid(),
+        week: document.getElementById("goalWeek").value || today,
+        text: document.getElementById("goalText").value.trim(),
+        done: false
+      };
+      if (!goal.text) return alert("Write a goal first.");
+      data.goals.unshift(goal);
+      document.getElementById("goalText").value = "";
+      save();
+    });
+
+    document.getElementById("addBulletBtn").addEventListener("click", () => {
+      const text = document.getElementById("customBullet").value.trim();
+      if (!text) return alert("Write a bullet first.");
+      data.customBullets.unshift({ id: uid(), text });
+      document.getElementById("customBullet").value = "";
+      save();
+    });
+
+    document.getElementById("copyBulletsBtn").addEventListener("click", async () => {
+      const bullets = buildBullets().map(b => "• " + b.text).join("\n");
+      await navigator.clipboard.writeText(bullets || "No bullets yet.");
+      alert("Copied bullets.");
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "internship-tracker-backup.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById("importInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const imported = JSON.parse(await file.text());
+        if (!imported.logs || !imported.goals || !imported.customBullets) throw new Error("Bad file");
+        data = imported;
+        save();
+        alert("Backup imported.");
+      } catch {
+        alert("That backup file did not look right.");
+      }
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("Reset all tracker data? This cannot be undone unless you exported a backup.")) {
+        data = structuredClone(defaultData);
+        save();
+      }
+    });
+
+    function deleteLog(id) { data.logs = data.logs.filter(x => x.id !== id); save(); }
+    function deleteGoal(id) { data.goals = data.goals.filter(x => x.id !== id); save(); }
+    function deleteBullet(id) { data.customBullets = data.customBullets.filter(x => x.id !== id); save(); }
+    function toggleGoal(id) {
+      data.goals = data.goals.map(g => g.id === id ? {...g, done: !g.done} : g);
+      save();
+    }
+
+    window.deleteLog = deleteLog;
+    window.deleteGoal = deleteGoal;
+    window.deleteBullet = deleteBullet;
+    window.toggleGoal = toggleGoal;
+
+    function buildBullets() {
+      const auto = data.logs
+        .filter(l => l.tag === "win" || l.impact)
+        .map(l => ({
+          id: "auto-" + l.id,
+          text: l.impact ? `${l.impact} (${l.date})` : `${l.text} (${l.date})`,
+          auto: true
+        }));
+      const custom = data.customBullets.map(b => ({...b, auto: false}));
+      return [...custom, ...auto];
+    }
+
+    function render() {
+      const entries = document.getElementById("entriesList");
+      if (!data.logs.length) entries.innerHTML = "No entries yet.";
+      else entries.innerHTML = data.logs.map(l => `
+        <div class="entry">
+          <div class="row"><span class="pill">${escapeHtml(l.tag)}</span><strong>${escapeHtml(l.date)}</strong></div>
+          ${l.text ? `<p>${escapeHtml(l.text)}</p>` : ""}
+          ${l.impact ? `<p class="impact">Impact: ${escapeHtml(l.impact)}</p>` : ""}
+          <button class="secondary" onclick="deleteLog('${l.id}')">Delete</button>
+        </div>
+      `).join("");
+
+      const goals = document.getElementById("goalsList");
+      if (!data.goals.length) goals.innerHTML = "No goals yet.";
+      else goals.innerHTML = data.goals.map(g => `
+        <div class="goal">
+          <label style="display:flex; align-items:flex-start; gap:8px; margin:0;">
+            <input class="checkbox" type="checkbox" ${g.done ? "checked" : ""} onchange="toggleGoal('${g.id}')" />
+            <span>
+              <strong>Week of ${escapeHtml(g.week)}</strong><br>
+              <span style="${g.done ? "text-decoration:line-through; opacity:.65;" : ""}">${escapeHtml(g.text)}</span>
+            </span>
+          </label>
+          <button class="secondary" style="margin-top:8px;" onclick="deleteGoal('${g.id}')">Delete</button>
+        </div>
+      `).join("");
+
+      const bullets = buildBullets();
+      const bulletEl = document.getElementById("bulletsList");
+      if (!bullets.length) bulletEl.innerHTML = "No bullets yet.";
+      else bulletEl.innerHTML = bullets.map(b => `
+        <div class="bullet">
+          <p>• ${escapeHtml(b.text)}</p>
+          <span class="pill">${b.auto ? "auto from log" : "custom"}</span>
+          ${b.auto ? "" : `<button class="secondary" onclick="deleteBullet('${b.id}')">Delete</button>`}
+        </div>
+      `).join("");
+
+      document.getElementById("totalEntries").textContent = data.logs.length;
+      document.getElementById("completedGoals").textContent = data.goals.filter(g => g.done).length;
+      document.getElementById("totalBullets").textContent = bullets.length;
+
+      const tags = ["technical", "collab", "learning", "win", "blocked/solved"];
+      const max = Math.max(1, ...tags.map(t => data.logs.filter(l => l.tag === t).length));
+      document.getElementById("tagStats").innerHTML = tags.map(t => {
+        const count = data.logs.filter(l => l.tag === t).length;
+        const pct = Math.round((count / max) * 100);
+        return `<div style="margin:12px 0;">
+          <div class="row" style="justify-content:space-between;"><strong>${t}</strong><span>${count}</span></div>
+          <div class="progress"><div class="bar" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join("");
+    }
+
+    let deferredPrompt;
+    const installBtn = document.getElementById("installBtn");
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.remove("hidden");
+    });
+    installBtn.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.classList.add("hidden");
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+    }
+
+    render();
+  </script>
+</body>
+</html>
