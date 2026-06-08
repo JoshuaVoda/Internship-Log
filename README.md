@@ -1,23 +1,16 @@
-# Internship Tracker PWA
+# Internship Tracker PWA — Improved Weekly View
 
-This folder contains an installable internship tracker app.
+This version improves the Weekly Goals tab with:
+- goals grouped into separate week cards
+- highlighted current week
+- per-week progress bars
+- collapsible older weeks
+- cleaner spacing and stronger visual hierarchy
 
-## Files
-- index.html
-- manifest.json
-- sw.js
-- icon-192.png
-- icon-512.png
+## Deploy
+Replace the files in your GitHub repo with these updated ones, then refresh your GitHub Pages site.
 
-## How to host on GitHub Pages
-1. Create a new GitHub repository named `internship-tracker`.
-2. Upload all files from this folder to the repository root.
-3. Go to Settings > Pages.
-4. Under "Build and deployment", choose "Deploy from a branch".
-5. Select branch `main` and folder `/root`, then save.
-6. Open the Pages URL GitHub gives you.
-7. In Chrome or Edge, click the install icon in the address bar.
-
-## Notes
-Your data saves in your browser using localStorage.
-Use Export Backup before clearing browser data or switching computers.
+## Optional
+If the page seems unchanged after uploading, hard refresh:
+- Windows: Ctrl + Shift + R
+- Mac: Cmd + Shift + R
